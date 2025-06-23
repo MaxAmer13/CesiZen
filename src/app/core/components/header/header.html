@@ -1,0 +1,24 @@
+<header class="bg-white shadow-md py-4">
+  <div class="container mx-auto px-4 flex items-center justify-between">
+    <!-- Logo -->
+    <a routerLink="/" class="text-2xl font-bold text-blue-700">
+      CESIZen
+    </a>
+
+    <!-- Navigation -->
+    <nav class="hidden md:flex space-x-6">
+      <a routerLink="/informations" class="text-gray-700 hover:text-blue-700 font-medium">Informations</a>
+      <a routerLink="/diagnostic" class="text-gray-700 hover:text-blue-700 font-medium">Diagnostic</a>
+    </nav>
+
+    <!-- Auth -->
+    <div>
+      <a *ngIf="!isLoggedIn" routerLink="/login" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+        Se connecter
+      </a>
+      <a *ngIf="isLoggedIn" routerLink="/profile" class="text-blue-600 hover:underline">
+        Mon Profil
+      </a>
+    </div>
+  </div>
+</header>

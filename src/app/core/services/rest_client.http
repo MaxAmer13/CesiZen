@@ -1,0 +1,9 @@
+﻿@BASE_URL = https://localhost:7231/api
+
+GET {{BASE_URL}}/categories
+User-Agent: rest-client
+Content-Type: application/json
+###
+GET https://localhost:5001/api/categories
+User-Agent: rest-client
+Content-Type: application/json

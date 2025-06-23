@@ -1,0 +1,29 @@
+<div class="min-h-screen bg-gray-50">
+
+  <!-- Barre de recherche -->
+  <div class="bg-blue-300 p-4 flex items-center justify-between">
+    <input
+      type="text"
+      placeholder="Recherche"
+      class="p-2 rounded-md w-1/3"
+    />
+    <!-- Filtres désactivés ici -->
+    <div class="flex gap-2">
+      <!-- filtres désactivés pour correspondre à la demande -->
+    </div>
+  </div>
+
+  <!-- Grille de ressources -->
+  <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <a
+      *ngFor="let article of articles"
+      [routerLink]="['/information', article.id]"
+      class="block p-4 bg-white rounded-xl shadow hover:shadow-lg transition"
+    >
+      <h3 class="text-lg font-bold mb-2">{{ article.titre }}</h3>
+      <p class="text-gray-600 text-sm">
+        {{ article.extrait }}
+      </p>
+    </a>
+  </div>
+</div>
