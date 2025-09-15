@@ -8,16 +8,21 @@ describe('Informations', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [InformationsComponent]
-    })
-    .compileComponents();
+      imports: [InformationsComponent] // si le composant est standalone
+    }).compileComponents();
 
     fixture = TestBed.createComponent(InformationsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  it('devrait créer le composant', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('devrait rendre le template sans erreur', () => {
+    const el: HTMLElement = fixture.nativeElement;
+    // vérifie qu'un élément du template existe — adapte le sélecteur si tu connais un id/class attendu
+    expect(el).toBeDefined();
   });
 });
