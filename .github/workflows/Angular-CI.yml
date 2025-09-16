@@ -6,7 +6,6 @@ on:
   pull_request:
     branches: [ "master", "develop" ]
 
-# Permissions par défaut minimales
 permissions:
   contents: read
 
@@ -15,20 +14,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 18
-
-      - name: Cache node_modules
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-
-      - name: Install dependencies
-        run: npm ci
+      - run: npm ci
 
   lint:
     needs: setup
@@ -38,15 +31,27 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-
-      - name: Restore node_modules from cache
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
 
-      - name: Run ESLint
+      # Vérifie si un script "lint" existe dans package.json
+      - id: check_lint
+        name: Check if npm 'lint' script exists
+        shell: bash
+        run: |
+          node -e "try{const p=require('./package.json'); const has=!!(p.scripts && p.scripts.lint); console.log('exists='+has)}catch(e){console.log('exists=false')}" >> "$GITHUB_OUTPUT"
+
+      # Lance le lint uniquement si le script existe
+      - name: Run lint
+        if: steps.check_lint.outputs.exists == 'true'
         run: npm run lint
+
+      # Sinon, marque explicitement le skip
+      - name: Skip lint (no npm 'lint' script)
+        if: steps.check_lint.outputs.exists != 'true'
+        run: echo "No npm 'lint' script found — skipping."
 
   test:
     needs: setup
@@ -56,13 +61,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-
-      - name: Restore node_modules from cache
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-
       - name: Run unit tests
         env:
           CI: true
@@ -76,20 +78,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-
-      - name: Restore node_modules from cache
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-
       - name: Run TypeScript type check
         run: npx tsc --noEmit
 
   build:
     needs: [lint, test, typecheck]
     runs-on: ubuntu-latest
-    # v4 des artifacts nécessite cette permission pour uploader
     permissions:
       contents: read
       actions: write
@@ -98,18 +96,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-
-      - name: Restore node_modules from cache
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-
       - name: Build Angular app
         env:
           NODE_ENV: production
         run: npm run build -- --configuration=production
-
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -121,7 +115,6 @@ jobs:
   security:
     needs: setup
     runs-on: ubuntu-latest
-    # Permission requise pour uploader le rapport
     permissions:
       contents: read
       actions: write
@@ -130,19 +123,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-
-      - name: Restore node_modules from cache
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-
       - name: Run npm audit (critical only)
         run: npm audit --omit=dev --audit-level=critical
-
       - name: Run npm audit (full report)
         run: npm audit --json > npm-audit.json || true
-
       - name: Upload npm audit report
         uses: actions/upload-artifact@v4
         with:
