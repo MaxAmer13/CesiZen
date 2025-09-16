@@ -10,78 +10,55 @@ permissions:
   contents: read
 
 jobs:
-  setup:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
-      - uses: actions/cache@v4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          node-version: 22
+          cache: npm
       - run: npm ci
 
-  lint:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-      - uses: actions/cache@v4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-
-      # Vérifie si un script "lint" existe dans package.json
+      # Détecte la présence d'un script "lint" dans package.json
       - id: check_lint
         name: Check if npm 'lint' script exists
         shell: bash
         run: |
-          node -e "try{const p=require('./package.json'); const has=!!(p.scripts && p.scripts.lint); console.log('exists='+has)}catch(e){console.log('exists=false')}" >> "$GITHUB_OUTPUT"
+          EXISTS=$(node -e "let has=false;try{const p=require('./package.json');has=!!(p.scripts&&p.scripts.lint);}catch(e){};process.stdout.write(has?'true':'false');")
+          echo "exists=$EXISTS" >> "$GITHUB_OUTPUT"
 
-      # Lance le lint uniquement si le script existe
       - name: Run lint
         if: steps.check_lint.outputs.exists == 'true'
         run: npm run lint
 
-      # Sinon, marque explicitement le skip
-      - name: Skip lint (no npm 'lint' script)
+      - name: Skip lint
         if: steps.check_lint.outputs.exists != 'true'
-        run: echo "No npm 'lint' script found — skipping."
+        run: echo "No npm 'lint' script — skipping."
 
   test:
-    needs: setup
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
-      - uses: actions/cache@v4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          node-version: 22
+          cache: npm
+      - run: npm ci
       - name: Run unit tests
         env:
           CI: true
         run: npm test
 
   typecheck:
-    needs: setup
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
-      - uses: actions/cache@v4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          node-version: 22
+          cache: npm
+      - run: npm ci
       - name: Run TypeScript type check
         run: npx tsc --noEmit
 
@@ -95,11 +72,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
-      - uses: actions/cache@v4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          node-version: 22
+          cache: npm
+      - run: npm ci
       - name: Build Angular app
         env:
           NODE_ENV: production
@@ -113,7 +88,6 @@ jobs:
           retention-days: 7
 
   security:
-    needs: setup
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -122,11 +96,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
-      - uses: actions/cache@v4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          node-version: 22
+          cache: npm
+      - run: npm ci
       - name: Run npm audit (critical only)
         run: npm audit --omit=dev --audit-level=critical
       - name: Run npm audit (full report)
