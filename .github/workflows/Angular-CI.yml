@@ -2,9 +2,9 @@ name: Angular CI
 
 on:
   push:
-    branches: [ "main", "develop" ]  # Déclenche le pipeline sur push vers main/develop
+    branches: [ "master", "develop" ]  # Déclenche le pipeline sur push vers master/develop
   pull_request:
-    branches: [ "main", "develop" ]  # Déclenche aussi sur les Pull Requests
+    branches: [ "master", "develop" ]  # Déclenche aussi sur les Pull Requests
 
 jobs:
   setup:
