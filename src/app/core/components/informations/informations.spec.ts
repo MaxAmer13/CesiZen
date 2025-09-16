@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { of } from 'rxjs';
 import { InformationsComponent } from './informations';
 
 describe('Informations', () => {
@@ -8,7 +10,17 @@ describe('Informations', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [InformationsComponent] // si le composant est standalone
+      imports: [InformationsComponent, RouterTestingModule],
+      providers: [
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { paramMap: convertToParamMap({}) },
+            params: of({}),
+            queryParamMap: of(convertToParamMap({}))
+          }
+        }
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(InformationsComponent);
@@ -22,7 +34,6 @@ describe('Informations', () => {
 
   it('devrait rendre le template sans erreur', () => {
     const el: HTMLElement = fixture.nativeElement;
-    // vérifie qu'un élément du template existe — adapte le sélecteur si tu connais un id/class attendu
     expect(el).toBeDefined();
   });
 });

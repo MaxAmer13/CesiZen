@@ -1,0 +1,12 @@
+﻿services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # En LOCAL, base href = "/"
+        BASE_HREF: "/"
+    image: cesizen:local
+    ports:
+      - "8080:80"
+    restart: unless-stopped

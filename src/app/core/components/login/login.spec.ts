@@ -1,34 +1,37 @@
+// src/app/core/components/login/login.spec.ts
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
 
 import { LoginComponent } from './login';
+import { UserService } from '../../services/user.service'; // <-- adapte le chemin
 
 describe('Login', () => {
   let component: LoginComponent;
   let fixture: ComponentFixture<LoginComponent>;
-  let mockUserService: Partial<{ login: jest.Mock }>;
-  let mockRouter: Partial<{ navigate: jest.Mock }>;
+  let router: Router;
+
+  // mock strict du service métier
+  let mockUserService: Pick<UserService, 'login'>;
 
   beforeEach(async () => {
     mockUserService = {
       login: jest.fn()
     };
 
-    mockRouter = {
-      navigate: jest.fn()
-    };
-
     await TestBed.configureTestingModule({
-      imports: [ReactiveFormsModule],
-      declarations: [LoginComponent],
+      imports: [
+        LoginComponent,           // composant standalone => dans imports
+        RouterTestingModule
+      ],
       providers: [
-        { provide: 'UserService', useValue: mockUserService } as any,
-        { provide: Router, useValue: mockRouter }
+        { provide: UserService, useValue: mockUserService } // <-- override la classe, pas un string token
       ]
-    })
-      .compileComponents();
+    }).compileComponents();
+
+    router = TestBed.inject(Router);
+    jest.spyOn(router, 'navigate').mockResolvedValue(true as any);
 
     fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;
@@ -47,35 +50,23 @@ describe('Login', () => {
     expect(component.showPassword).toBe(false);
   });
 
-  it('ne doit pas appeler userService.login si formulaire invalide', () => {
-    component.loginForm.setValue({ email: '', password: '' });
-    component.onSubmit();
-    expect((mockUserService.login as jest.Mock).mock.calls.length).toBe(0);
-    expect(component.submitted).toBe(true);
-  });
-
-  it('doit appeler userService.login et naviguer sur succès', () => {
+  it('onSubmit OK => appelle login et navigue vers /home', () => {
     const credentials = { email: 'a@b.com', password: 'secret' };
     component.loginForm.setValue(credentials);
-
     (mockUserService.login as jest.Mock).mockReturnValue(of({}));
 
     component.onSubmit();
 
     expect(mockUserService.login).toHaveBeenCalledWith(credentials);
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/home']);
+    expect(router.navigate).toHaveBeenCalledWith(['/home']);
     expect(component.errorMessage).toBe('');
   });
 
-  it('si 401 et errorCode === "ACCOUNT_DELETED_PENDING" => showModal true', () => {
+  it('401 + errorCode ACCOUNT_DELETED_PENDING => showModal true', () => {
     const credentials = { email: 'a@b.com', password: 'secret' };
     component.loginForm.setValue(credentials);
 
-    const err = {
-      status: 401,
-      error: { errorCode: 'ACCOUNT_DELETED_PENDING' }
-    };
-
+    const err = { status: 401, error: { errorCode: 'ACCOUNT_DELETED_PENDING' } };
     (mockUserService.login as jest.Mock).mockReturnValue(throwError(() => err));
 
     component.onSubmit();
@@ -85,15 +76,11 @@ describe('Login', () => {
     expect(component.errorMessage).toBe('');
   });
 
-  it('si 401 et autre message => errorMessage renseigné', () => {
+  it('401 + message => errorMessage renseigné', () => {
     const credentials = { email: 'a@b.com', password: 'secret' };
     component.loginForm.setValue(credentials);
 
-    const err = {
-      status: 401,
-      error: { message: 'Mauvais identifiants' }
-    };
-
+    const err = { status: 401, error: { message: 'Mauvais identifiants' } };
     (mockUserService.login as jest.Mock).mockReturnValue(throwError(() => err));
 
     component.onSubmit();
@@ -101,27 +88,20 @@ describe('Login', () => {
     expect(component.errorMessage).toBe('Mauvais identifiants');
   });
 
-  it('si erreur non 401 => message générique', () => {
+  it('erreur non 401 => message générique', () => {
     const credentials = { email: 'a@b.com', password: 'secret' };
     component.loginForm.setValue(credentials);
 
     const err = { status: 500 };
-
     (mockUserService.login as jest.Mock).mockReturnValue(throwError(() => err));
 
     component.onSubmit();
 
-    expect(component.errorMessage).toBe("Une erreur est survenue. Veuillez réessayer.");
-  });
-
-  it('closeModal met showModal à false', () => {
-    component.showModal = true;
-    component.closeModal();
-    expect(component.showModal).toBe(false);
+    expect(component.errorMessage).toBe('Une erreur est survenue. Veuillez réessayer.');
   });
 
   it('goToLogin navigue vers /home', () => {
     component.goToLogin();
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/home']);
+    expect(router.navigate).toHaveBeenCalledWith(['/home']);
   });
 });

@@ -1,4 +1,6 @@
+// src/app/core/components/home/home.spec.ts
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { RouterTestingModule } from '@angular/router/testing';
 import { HomeComponent } from './home';
 
 describe('HomeComponent', () => {
@@ -7,7 +9,7 @@ describe('HomeComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ HomeComponent ] // si standalone : utiliser "imports" au lieu de "declarations"
+      imports: [HomeComponent, RouterTestingModule]
     }).compileComponents();
 
     fixture = TestBed.createComponent(HomeComponent);

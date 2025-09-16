@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FooterComponent } from './footer';
+import { RouterTestingModule } from '@angular/router/testing'; // retire si pas de routerLink
 
 describe('FooterComponent', () => {
   let component: FooterComponent;
@@ -7,7 +8,10 @@ describe('FooterComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ FooterComponent ] // si standalone : utiliser "imports"
+      imports: [
+        FooterComponent,
+        RouterTestingModule // seulement si le template utilise routerLink
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(FooterComponent);

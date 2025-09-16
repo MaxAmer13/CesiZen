@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HeaderComponent } from './header';
+import { RouterTestingModule } from '@angular/router/testing'; // retire si pas de routerLink
 
 describe('HeaderComponent', () => {
   let component: HeaderComponent;
@@ -7,7 +8,10 @@ describe('HeaderComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ HeaderComponent ] // si standalone : utiliser "imports"
+      imports: [
+        HeaderComponent,
+        RouterTestingModule // seulement si le template utilise routerLink
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(HeaderComponent);
@@ -21,7 +25,6 @@ describe('HeaderComponent', () => {
 
   it('devrait afficher le titre si présent (exemple)', () => {
     const el: HTMLElement = fixture.nativeElement;
-    // Remplace '.app-title' par un sélecteur réel de ton template si tu veux une assertion DOM concrète
     const title = el.querySelector('.app-title');
     expect(title === null || title instanceof HTMLElement).toBe(true);
   });
