@@ -10,55 +10,84 @@ permissions:
   contents: read
 
 jobs:
-  lint:
+  setup:
     runs-on: ubuntu-latest
+    outputs:
+      node_version: ${{ steps.node.outputs.node-version }}
+      has_lint: ${{ steps.check_lint.outputs.exists }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - id: node
+        name: Use Node.js 22
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
 
-      # Détecte la présence d'un script "lint" dans package.json
+      - name: Install dependencies
+        run: npm ci
+
       - id: check_lint
         name: Check if npm 'lint' script exists
         shell: bash
         run: |
           EXISTS=$(node -e "let has=false;try{const p=require('./package.json');has=!!(p.scripts&&p.scripts.lint);}catch(e){};process.stdout.write(has?'true':'false');")
           echo "exists=$EXISTS" >> "$GITHUB_OUTPUT"
+          echo "Lint script exists: $EXISTS"
 
-      - name: Run lint
-        if: steps.check_lint.outputs.exists == 'true'
-        run: npm run lint
-
-      - name: Skip lint
-        if: steps.check_lint.outputs.exists != 'true'
-        run: echo "No npm 'lint' script — skipping."
-
-  test:
+  lint:
+    needs: setup
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ needs.setup.outputs.node_version }}
           cache: npm
+
       - run: npm ci
+
+      - name: Run lint
+        if: needs.setup.outputs.has_lint == 'true'
+        run: npm run lint
+
+      - name: Skip lint
+        if: needs.setup.outputs.has_lint != 'true'
+        run: echo "No npm 'lint' script — skipping."
+
+  test:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ needs.setup.outputs.node_version }}
+          cache: npm
+
+      - run: npm ci
+
       - name: Run unit tests
         env:
           CI: true
         run: npm test
 
   typecheck:
+    needs: setup
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ needs.setup.outputs.node_version }}
           cache: npm
+
       - run: npm ci
+
       - name: Run TypeScript type check
         run: npx tsc --noEmit
 
@@ -70,15 +99,19 @@ jobs:
       actions: write
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+
       - run: npm ci
+
       - name: Build Angular app
         env:
           NODE_ENV: production
         run: npm run build -- --configuration=production
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -88,21 +121,27 @@ jobs:
           retention-days: 7
 
   security:
+    needs: setup
     runs-on: ubuntu-latest
     permissions:
       contents: read
       actions: write
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ needs.setup.outputs.node_version }}
           cache: npm
+
       - run: npm ci
+
       - name: Run npm audit (critical only)
         run: npm audit --omit=dev --audit-level=critical
+
       - name: Run npm audit (full report)
         run: npm audit --json > npm-audit.json || true
+
       - name: Upload npm audit report
         uses: actions/upload-artifact@v4
         with:
